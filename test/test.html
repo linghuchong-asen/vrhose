@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style></style>
+</head>
+
+<body>
+
+  <!-- <img src="../housing/picture/center.png" alt="">
+   -->
+  <script>
+
+    "use strict";
+
+    function curry(f) { // curry(f) 执行柯里化转换
+      console.log(1)
+      return function (a) {
+        console.log(2)
+        return function (b) {
+          return f(a, b);
+        };
+      };
+    }
+
+    // 用法
+    function sum(a, b) {
+      return a + b;
+    }
+
+    let curriedSum = curry(sum);
+
+    alert(curriedSum(1)(2)); // 3
+
+  </script>
+</body>
+
+</html>

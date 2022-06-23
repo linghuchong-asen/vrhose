@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>SecondHousing</title>
@@ -10,7 +11,7 @@
 
     <style>
         body {
-            background-color: rgb(200,200,200);
+            background-color: rgb(200, 200, 200);
             margin: 0px;
             overflow: hidden;
         }
@@ -21,11 +22,12 @@
         }
     </style>
 </head>
-<body>
-<div id="container">
 
-</div>
-<script id="vertexShader" type="x-shader/x-vertex">
+<body>
+    <div id="container">
+
+    </div>
+    <script id="vertexShader" type="x-shader/x-vertex">
         // attribute vec3 position;
         // attribute vec3 color;
         // 系统自动声明顶点纹理坐标变量uv
@@ -39,8 +41,8 @@
             gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4( position, 1.0 );
         }
     </script>
-<!-- 片元着色器 -->
-<script id="fragmentShader" type="x-shader/x-fragment">
+    <!-- 片元着色器 -->
+    <script id="fragmentShader" type="x-shader/x-fragment">
         // 声明一个纹理对象变量
         uniform sampler2D texture1;
         uniform sampler2D texture2;
@@ -52,334 +54,335 @@
             gl_FragColor = mix(texture2D( texture1, vUv ),texture2D( texture2, vUv ), time);
          }
     </script>
-<script>
+    <script>
 
-    var camera,scene,renderer,mesh_living,mesh_circle, mesh_center,geometry_living,geometry_circle,geometry_center;
-    var isUserInteracting=false,//用户是否交互
-        onPointerDownPointerX = 0, onPointerDownPointerY = 0,//鼠标点击的位置
-        lon = 90, onPointerDownLon = 0,//经度
-        lat = 0,onPointerDownLat = 0,//维度
-        phi = 0, theta = 0,//计算相机的位置
-        target =  new THREE.Vector3();//三维向量
+        var camera, scene, renderer, mesh_living, mesh_circle, mesh_center, geometry_living, geometry_circle, geometry_center;
+        var isUserInteracting = false,//用户是否交互
+            onPointerDownPointerX = 0, onPointerDownPointerY = 0,//鼠标点击的位置
+            lon = 90, onPointerDownLon = 0,//经度
+            lat = 0, onPointerDownLat = 0,//维度
+            phi = 0, theta = 0,//计算相机的位置
+            target = new THREE.Vector3();//三维向量
         var materialArray = [];
-    //定义盒子的材质，采用自定义着色器
-    var texturesArray = [];
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/right.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/left.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/top.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/bottom.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/front.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/back.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/right.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/left.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/top.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/bottom.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/front.jpeg'));
-    texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/back.jpeg'));
+        //定义盒子的材质，采用自定义着色器
+        var texturesArray = [];
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/right.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/left.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/top.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/bottom.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/front.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/living-room/back.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/right.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/left.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/top.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/bottom.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/front.jpeg'));
+        texturesArray.push(new THREE.TextureLoader().load('picture/SecondHousing/study/back.jpeg'));
 
 
-    //初始化函数
-    function init(){
-        var container;//初始化操作
-        container = document.getElementById('container');
-        camera = new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.01,10000);//相机初试位置
-        camera.position.set(0,0,0);
+        //初始化函数
+        function init() {
+            var container;//初始化操作
+            container = document.getElementById('container');
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 10000);//相机初试位置
+            camera.position.set(0, 0, 0);
 
-        scene = new THREE.Scene();
+            scene = new THREE.Scene();
 
-        //定义盒子模型的骨架
-        geometry_living = new THREE.BoxBufferGeometry(100,100,100);//设置正方体和骨架分段数
-        //定义行走点的骨架
-        geometry_circle = new THREE.CircleGeometry(4,20,0,2 * Math.PI);
+            //定义盒子模型的骨架
+            geometry_living = new THREE.BoxBufferGeometry(100, 100, 100);//设置正方体和骨架分段数
+            //定义行走点的骨架
+            geometry_circle = new THREE.CircleGeometry(4, 20, 0, 2 * Math.PI);
 
-        geometry_center = new THREE.CircleGeometry(12,40,0,2 * Math.PI);
-        //随机挑选一个面翻转扩大，使得贴图能够正常渲染
-        geometry_living.scale(-1,1,1);
-        geometry_circle.scale(-1,1,1);
-        geometry_center.scale(-1,1,1);
+            geometry_center = new THREE.CircleGeometry(12, 40, 0, 2 * Math.PI);
+            //随机挑选一个面翻转扩大，使得贴图能够正常渲染
+            geometry_living.scale(-1, 1, 1);
+            geometry_circle.scale(-1, 1, 1);
+            geometry_center.scale(-1, 1, 1);
 
 
 
-        //渲染六个面
-        document.time= 0;
-        for(let i = 0; i < 6; i++) {
-            materialArray.push(new THREE.ShaderMaterial({
-                uniforms: {
-                    texture1: {
-                        value: texturesArray[i]
+            //渲染六个面
+            document.time = 0;
+            for (let i = 0; i < 6; i++) {
+                materialArray.push(new THREE.ShaderMaterial({
+                    uniforms: {
+                        texture1: {
+                            value: texturesArray[i]
+                        },
+                        //用于渐变的纹理
+                        texture2: {
+                            value: texturesArray[6 + i]
+                        },
+                        time: {
+                            value: document.time
+                        }
                     },
-                    //用于渐变的纹理
-                    texture2: {
-                        value: texturesArray[6 + i]
-                    },
-                    time: {
-                        value: document.time
-                    }
-                },
-                // 顶点着色器
-                vertexShader: document.getElementById('vertexShader').textContent,
-                // 片元着色器
-                fragmentShader: document.getElementById('fragmentShader').textContent,
-                side: THREE.DoubleSide
-            }))
-        }
-
-        //定义盒子的网格
-        mesh_living = new THREE.Mesh(geometry_living,materialArray);//为骨架贴上贴图
-
-        mesh_living.position.set(0,0,0);
-
-        //定义白点的材质
-        mesh_circle = new THREE.Mesh(geometry_circle,
-            new THREE.MeshBasicMaterial({
-                map:new THREE.TextureLoader().load( 'picture/hotpot.png'),
-                transparent : true,
-
-            } ) );
-        mesh_circle.rotation.x = Math.PI/2;
-        mesh_circle.position.set(-40,-40,-45);
-
-        mesh_center = new THREE.Mesh(geometry_center,
-            new THREE.MeshBasicMaterial({
-                map:new THREE.TextureLoader().load( 'picture/center.png'),
-                transparent : true,
-                opacity:.4,
-
-            } ) );
-        mesh_center.rotation.x = Math.PI/2;
-        mesh_center.rotation.z = Math.PI;
-        mesh_center.position.set(camera.position.x,camera.position.y-20,camera.position.z);
-        scene.add(mesh_living)
-
-        scene.add(mesh_circle);
-
-        scene.add(mesh_center);
-
-        //定义渲染器
-        renderer = new THREE.WebGLRenderer({
-            antialias: true
-        });
-        renderer.setClearColor(0xffffff, 1);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染区域尺寸
-        container.appendChild(renderer.domElement); //body元素中插入canvas对象
-
-
-
-        document.addEventListener('click', mouseClickEvent, false);
-        document.addEventListener('mousedown', mouseMoveEvent, false);
-        //添加电脑事件
-        document.addEventListener('mousedown',onDocumentMouseDown,false);
-        document.addEventListener('mousemove',onDocumentMouseMove,false);
-        document.addEventListener('mouseup',onDocumentMouseUp,false);
-        document.addEventListener('wheel',onDocumentMouseWheel,false);
-        //添加手机事件
-        document.addEventListener('touchstart',onDocumentTouchStart,{passive:false});
-        document.addEventListener('touchmove',onDocumentTouchMove,{passive:false});
-        document.addEventListener('touchend',onDocumentTouchEnd,{passive:false});
-        document.addEventListener('touchstart',mouseMoveEvent,{passive:false});
-        document.addEventListener('touchstart',mouseClickEvent,{passive:false});
-        //刷新按钮，页面重置后的事件
-        window.addEventListener('resize',onWindowResize,false);
-
-
-
-        // container.addEventListener('click', mouseClickEvent, false);
-        // container.addEventListener('mousemove', mouseMoveEvent, false);
-        // //添加电脑事件
-        // document.addEventListener('mousedown',onDocumentMouseDown,false);
-        // document.addEventListener('mousemove',onDocumentMouseMove,false);
-        // document.addEventListener('mouseup',onDocumentMouseUp,false);
-        // document.addEventListener('wheel',onDocumentMouseWheel,false);
-        // //添加手机事件
-        // document.addEventListener('touchstart',onDocumentTouchStart,{passive:false});
-        // document.addEventListener('touchmove',onDocumentTouchMove,{passive:false});
-        // document.addEventListener('touchstart',mouseMoveEvent,{passive:false});
-        // document.addEventListener('touchstart',mouseClickEvent,{passive:false});
-        // //刷新按钮，页面重置后的事件
-        // window.addEventListener('resize',onWindowResize,false);
-    }
-
-    let mouse = new THREE.Vector2();
-    function mouseMoveEvent(event) {
-        if (event.touches) {
-            mouse.width = (event.touches[0].pageX/container.clientWidth)*2-1;
-            mouse.height = -(event.touches[0].pageY/container.clientHeight)*2+1;
-        } else {
-            mouse.width = (event.clientX / container.clientWidth) * 2 - 1;
-            mouse.height = - (event.clientY / container.clientHeight) * 2 + 1;
-        }
-
-    }
-    function mouseClickEvent(event) {
-        event.preventDefault();
-        // 射线捕捉
-        let raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-        let intersects = raycaster.intersectObjects([mesh_circle]);
-        let move_begin = {
-            mix: 0, s_x: 1.5, s_y: 1.5, s_z: 3
-        };
-        let move_end = {
-            mix: 1, s_x: 1, s_y: 1, s_z: 1
-        }
-        if (intersects.length > 0) {
-
-            if (mesh_circle.position.x == -20) {
-                mesh_circle.position.set(-40,-40,-45);
-
-                move_begin.mix = 1;
-                move_end.mix = 0;
-                ChangeScene(move_begin, move_end);
-                camera.lookAt(-20,-40,45);
-
-            } else if (mesh_circle.position.x == -40) {
-                mesh_circle.position.set(-20,-40,-45);
-
-                move_begin.mix = 0;
-                move_end.mix = 1;
-                ChangeScene(move_begin, move_end);
-                camera.lookAt(-20,-40,45);
+                    // 顶点着色器
+                    vertexShader: document.getElementById('vertexShader').textContent,
+                    // 片元着色器
+                    fragmentShader: document.getElementById('fragmentShader').textContent,
+                    side: THREE.DoubleSide
+                }))
             }
+
+            //定义盒子的网格
+            mesh_living = new THREE.Mesh(geometry_living, materialArray);//为骨架贴上贴图
+
+            mesh_living.position.set(0, 0, 0);
+
+            //定义白点的材质
+            mesh_circle = new THREE.Mesh(geometry_circle,
+                new THREE.MeshBasicMaterial({
+                    map: new THREE.TextureLoader().load('picture/hotpot.png'),
+                    transparent: true,
+
+                }));
+            mesh_circle.rotation.x = Math.PI / 2;
+            mesh_circle.position.set(-40, -40, -45);
+
+            mesh_center = new THREE.Mesh(geometry_center,
+                new THREE.MeshBasicMaterial({
+                    map: new THREE.TextureLoader().load('picture/center.png'),
+                    transparent: true,
+                    opacity: .4,
+
+                }));
+            mesh_center.rotation.x = Math.PI / 2;
+            mesh_center.rotation.z = Math.PI;
+            mesh_center.position.set(camera.position.x, camera.position.y - 20, camera.position.z);
+            scene.add(mesh_living)
+
+            scene.add(mesh_circle);
+
+            scene.add(mesh_center);
+
+            //定义渲染器
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            renderer.setClearColor(0xffffff, 1);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染区域尺寸
+            container.appendChild(renderer.domElement); //body元素中插入canvas对象
+
+
+
+            document.addEventListener('click', mouseClickEvent, false);
+            document.addEventListener('mousedown', mouseMoveEvent, false);
+            //添加电脑事件
+            document.addEventListener('mousedown', onDocumentMouseDown, false);
+            document.addEventListener('mousemove', onDocumentMouseMove, false);
+            document.addEventListener('mouseup', onDocumentMouseUp, false);
+            document.addEventListener('wheel', onDocumentMouseWheel, false);
+            //添加手机事件
+            document.addEventListener('touchstart', onDocumentTouchStart, { passive: false });
+            document.addEventListener('touchmove', onDocumentTouchMove, { passive: false });
+            document.addEventListener('touchend', onDocumentTouchEnd, { passive: false });
+            document.addEventListener('touchstart', mouseMoveEvent, { passive: false });
+            document.addEventListener('touchstart', mouseClickEvent, { passive: false });
+            //刷新按钮，页面重置后的事件
+            window.addEventListener('resize', onWindowResize, false);
+
+
+
+            // container.addEventListener('click', mouseClickEvent, false);
+            // container.addEventListener('mousemove', mouseMoveEvent, false);
+            // //添加电脑事件
+            // document.addEventListener('mousedown',onDocumentMouseDown,false);
+            // document.addEventListener('mousemove',onDocumentMouseMove,false);
+            // document.addEventListener('mouseup',onDocumentMouseUp,false);
+            // document.addEventListener('wheel',onDocumentMouseWheel,false);
+            // //添加手机事件
+            // document.addEventListener('touchstart',onDocumentTouchStart,{passive:false});
+            // document.addEventListener('touchmove',onDocumentTouchMove,{passive:false});
+            // document.addEventListener('touchstart',mouseMoveEvent,{passive:false});
+            // document.addEventListener('touchstart',mouseClickEvent,{passive:false});
+            // //刷新按钮，页面重置后的事件
+            // window.addEventListener('resize',onWindowResize,false);
         }
-        setTimeout(function () {
-            isUserInteracting = false;
 
-        }, 1000);
-    }
-
-
-    //切换函数
-    function ChangeScene(move_begin, move_end) {
-        mesh_living.scale.set(1.5, 1.5, 3);
-        let tween = new TWEEN.Tween(move_begin)
-            .to(move_end, 1000)
-            .easing(TWEEN.Easing.Quadratic.Out)
-            .onUpdate(function () {
-                isUserInteracting = true;
-                mesh_living.scale.set(move_begin.s_x, move_begin.s_y, move_begin.s_z);
-                document.time = move_begin.mix;
-                camera.lookAt(-20,-40,-45);
-                if (document.time < 1) {
-                    for (let i = 0; i < 6; i++) {
-                        materialArray[i].uniforms.time.value = document.time;
-                    }
-                } else {
-                    isUserInteracting = false;
-                    mesh_center.position.set(camera.position.x, camera.position.y - 20, camera.position.z);
-                    console.log('动画执行完毕！');
-                    camera.position.set(0,0,0);
-                    camera.lookAt(-20,-40,45);
-                }
-
-            })
-            .start();
-
-
-    }
-    function onWindowResize(){
-        camera.aspect = window.innerWidth/window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth,window.innerHeight);
-    }
-
-    function onDocumentMouseDown(event){
-
-        event.preventDefault();
-        isUserInteracting = true;
-        onPointerDownPointerX = event.clientX;
-        onPointerDownPointerY = event.clientY;
-
-        onPointerDownLon = lon;
-        onPointerDownLat = lat;
-
-    }
-    function onDocumentMouseMove(event) {
-        if ( isUserInteracting ===true){
-
-                lon = ( onPointerDownPointerX - event.clientX ) * 0.1 + onPointerDownLon;
-                lat = ( event.clientY - onPointerDownPointerY ) * 0.1 + onPointerDownLat;
-
+        let mouse = new THREE.Vector2();
+        function mouseMoveEvent(event) {
+            if (event.touches) {
+                mouse.width = (event.touches[0].pageX / container.clientWidth) * 2 - 1;
+                mouse.height = -(event.touches[0].pageY / container.clientHeight) * 2 + 1;
+            } else {
+                mouse.width = (event.clientX / container.clientWidth) * 2 - 1;
+                mouse.height = - (event.clientY / container.clientHeight) * 2 + 1;
+            }
 
         }
-
-    }
-    function onDocumentMouseUp( event ) {
-
-        isUserInteracting = false;
-
-    }
-    function onDocumentMouseWheel( event ) {
-
-        var fov = camera.fov + event.deltaY * 0.05;
-
-        camera.fov = THREE.Math.clamp( fov, 10, 75 );
-
-        camera.updateProjectionMatrix();
-
-    }
-    function onDocumentTouchStart( event ) {
-
-        if ( event.touches.length == 1 ) {
-            isUserInteracting = true;
+        function mouseClickEvent(event) {
             event.preventDefault();
+            // 射线捕捉
+            let raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            let intersects = raycaster.intersectObjects([mesh_circle]);
+            let move_begin = {
+                mix: 0, s_x: 1.5, s_y: 1.5, s_z: 3
+            };
+            let move_end = {
+                mix: 1, s_x: 1, s_y: 1, s_z: 1
+            }
+            if (intersects.length > 0) {
 
-            onPointerDownPointerX = event.touches[ 0 ].pageX;
-            onPointerDownPointerY = event.touches[ 0 ].pageY;
+                if (mesh_circle.position.x == -20) {
+                    mesh_circle.position.set(-40, -40, -45);
+
+                    move_begin.mix = 1;
+                    move_end.mix = 0;
+                    ChangeScene(move_begin, move_end);
+                    camera.lookAt(-20, -40, 45);
+
+                } else if (mesh_circle.position.x == -40) {
+                    mesh_circle.position.set(-20, -40, -45);
+
+                    move_begin.mix = 0;
+                    move_end.mix = 1;
+                    ChangeScene(move_begin, move_end);
+                    camera.lookAt(-20, -40, 45);
+                }
+            }
+            setTimeout(function () {
+                isUserInteracting = false;
+
+            }, 1000);
+        }
+
+
+        //切换函数
+        function ChangeScene(move_begin, move_end) {
+            mesh_living.scale.set(1.5, 1.5, 3);
+            let tween = new TWEEN.Tween(move_begin)
+                .to(move_end, 1000)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onUpdate(function () {
+                    isUserInteracting = true;
+                    mesh_living.scale.set(move_begin.s_x, move_begin.s_y, move_begin.s_z);
+                    document.time = move_begin.mix;
+                    camera.lookAt(-20, -40, -45);
+                    if (document.time < 1) {
+                        for (let i = 0; i < 6; i++) {
+                            materialArray[i].uniforms.time.value = document.time;
+                        }
+                    } else {
+                        isUserInteracting = false;
+                        mesh_center.position.set(camera.position.x, camera.position.y - 20, camera.position.z);
+                        console.log('动画执行完毕！');
+                        camera.position.set(0, 0, 0);
+                        camera.lookAt(-20, -40, 45);
+                    }
+
+                })
+                .start();
+
+
+        }
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onDocumentMouseDown(event) {
+
+            event.preventDefault();
+            isUserInteracting = true;
+            onPointerDownPointerX = event.clientX;
+            onPointerDownPointerY = event.clientY;
 
             onPointerDownLon = lon;
             onPointerDownLat = lat;
 
         }
+        function onDocumentMouseMove(event) {
+            if (isUserInteracting === true) {
 
-    }
-    function onDocumentTouchEnd( event ) {
-        isUserInteracting = false;
-    }
-    function onDocumentTouchMove( event ) {
+                lon = (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon;
+                lat = (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat;
 
-        if ( event.touches.length == 1 ) {
 
-            event.preventDefault();
-
-            lon = ( onPointerDownPointerX - event.touches[0].pageX ) * 0.1 + onPointerDownLon;
-            lat = ( event.touches[0].pageY - onPointerDownPointerY ) * 0.1 + onPointerDownLat;
+            }
 
         }
+        function onDocumentMouseUp(event) {
 
-    }
-    function animate() {
-
-        requestAnimationFrame( animate );
-        update();
-        TWEEN.update();
-
-
-    }
-    function update() {
-
-        if ( isUserInteracting === false ) {
-
-            lon += 0.1;
+            isUserInteracting = false;
 
         }
+        function onDocumentMouseWheel(event) {
 
-        lat = Math.max( - 45, Math.min( 85, lat ) );
-        phi = THREE.Math.degToRad( 90 - lat );
-        theta = THREE.Math.degToRad( lon );
+            var fov = camera.fov + event.deltaY * 0.05;
 
-        target.x = 500 * Math.sin( phi ) * Math.cos( theta );
-        target.y = 500 * Math.cos( phi );
-        target.z = 500 * Math.sin( phi ) * Math.sin( theta );
+            camera.fov = THREE.Math.clamp(fov, 10, 75);
 
-        camera.lookAt( target );
+            camera.updateProjectionMatrix();
 
-        renderer.render( scene, camera );
+        }
+        function onDocumentTouchStart(event) {
+
+            if (event.touches.length == 1) {
+                isUserInteracting = true;
+                event.preventDefault();
+
+                onPointerDownPointerX = event.touches[0].pageX;
+                onPointerDownPointerY = event.touches[0].pageY;
+
+                onPointerDownLon = lon;
+                onPointerDownLat = lat;
+
+            }
+
+        }
+        function onDocumentTouchEnd(event) {
+            isUserInteracting = false;
+        }
+        function onDocumentTouchMove(event) {
+
+            if (event.touches.length == 1) {
+
+                event.preventDefault();
+
+                lon = (onPointerDownPointerX - event.touches[0].pageX) * 0.1 + onPointerDownLon;
+                lat = (event.touches[0].pageY - onPointerDownPointerY) * 0.1 + onPointerDownLat;
+
+            }
+
+        }
+        function animate() {
+
+            requestAnimationFrame(animate);
+            update();
+            TWEEN.update();
 
 
-    }
-    init();
-    animate();
-</script>
+        }
+        function update() {
+
+            if (isUserInteracting === false) {
+
+                lon += 0.1;
+
+            }
+
+            lat = Math.max(- 45, Math.min(85, lat));
+            phi = THREE.Math.degToRad(90 - lat);
+            theta = THREE.Math.degToRad(lon);
+
+            target.x = 500 * Math.sin(phi) * Math.cos(theta);
+            target.y = 500 * Math.cos(phi);
+            target.z = 500 * Math.sin(phi) * Math.sin(theta);
+
+            camera.lookAt(target);
+
+            renderer.render(scene, camera);
+
+
+        }
+        init();
+        animate();
+    </script>
 </body>
+
 </html>
