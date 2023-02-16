@@ -1,48 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>FirstHousing</title>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
-    />
-    <script src="three_js/build/three.min.js"></script>
-    <script src="three_js/tween.js"></script>
 
-    <style>
-      body {
-        background-color: rgb(200, 200, 200);
-        margin: 0px;
-        overflow: hidden;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>FirstHousing</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <script src="three_js/build/three.min.js"></script>
+  <script src="three_js/tween.js"></script>
 
-      a {
-        color: #ffffff;
-      }
-    </style>
-  </head>
+  <style>
+    body {
+      background-color: rgb(200, 200, 200);
+      margin: 0px;
+      overflow: hidden;
+    }
 
-  <body>
-    <div id="container"></div>
-    <!--  -->
-    <script id="vertexShader" type="x-shader/x-vertex">
-      // attribute vec3 position;
-      // attribute vec3 color;
-      // 系统自动声明顶点纹理坐标变量uv
-      // attribute vec2 uv;
-      // varying关键字声明一个变量表示顶点纹理坐标插值后的结果
-      varying vec2 vUv;
-      void main(){
-          // 顶点纹理坐标uv数据进行插值计算
-          vUv = uv;
-          // 投影矩阵projectionMatrix、视图矩阵viewMatrix、模型矩阵modelMatrix
-          gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4( position, 1.0 );
-      }
-    </script>
-    <!-- 片元着色器 -->
-    <script id="fragmentShader" type="x-shader/x-fragment">
+    a {
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+  <!-- 顶点着色器 -->
+  <!-- position uv应该是three.js内部做的工作,也就是顶点位置，纹理坐标不需要使用者再去计算和定义了,three.js已经定义好了,可以直接拿来用
+      包括projectionMatrix viewMatrix modelMatrix三个矩阵也是three.js内部帮忙做的工作,直接拿来用就行 -->
+  <!-- three.js还帮助使用者省去了webgl创建顶点缓冲区,纹理图像缓冲区，配置纹理渲染方式,等等一系列繁琐的工作,只需通过ShaderMaterial的uniforms属性传递给three.js参数即可,其他工作three.js内部完成了 -->
+  <!-- 使用ShaderMaterial的作用是为了得到一个材质,那么为什么还一定要写顶点着色器呢？写顶点着色器的目的是为了获取到和顶点位置相关的数据，一般的场景片元着色都和位置有着关联，除非是纯色且没有动态变化的场景。 -->
+  <script id="vertexShader" type="x-shader/x-vertex">
+  // attribute vec3 position;
+  // attribute vec3 color;
+  // 系统自动声明顶点纹理坐标变量uv
+  // attribute vec2 uv;
+  // varying关键字声明一个变量表示顶点纹理坐标插值后的结果
+  varying vec2 vUv;
+  void main(){
+  // 顶点纹理坐标uv数据进行插值计算
+  vUv = uv;
+  // 投影矩阵projectionMatrix、视图矩阵viewMatrix、模型矩阵modelMatrix
+  gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4( position, 1.0 );
+  }
+  </script>
+  <!-- 片元着色器 -->
+  <script id="fragmentShader" type="x-shader/x-fragment">
       // 声明一个纹理对象变量
       uniform sampler2D texture1;
       uniform sampler2D texture2;
@@ -50,421 +52,425 @@
       // 顶点片元化后有多少个片元就有多少个纹理坐标数据 vUv
       varying vec2 vUv;
       void main() {
-          //webgl内置函数texture2D通过纹理坐标vUv获得贴图texture的像素值
+          // webgl内置函数texture2D通过纹理坐标vUv获得贴图texture的像素值
           // webgl内置函数 mix(m,n,k)	线性插值计算,插值区间[m,n],插值系数k，插值计算公式：m(1-k)+nk；插值系数time是一个uniform变量，在下面有赋值
           gl_FragColor = mix(texture2D( texture1, vUv ),texture2D( texture2, vUv ), time);
        }
-    </script>
-    <script>
-      var camera,
-        scene,
-        renderer,
-        mesh_living,
-        mesh_circle,
-        mesh_center,
-        geometry_living,
-        geometry_circle,
-        geometry_center;
-      var isUserInteracting = false, //用户是否交互
-        onPointerDownPointerX = 0,
-        onPointerDownPointerY = 0, //鼠标点击的位置
-        lon = 90,
-        onPointerDownLon = 0, //经度
-        lat = 0,
-        onPointerDownLat = 0, //维度
-        phi = 0,
-        theta = 0, //计算相机的位置
-        target = new THREE.Vector3(); //三维向量
-      var materialArray = []; //定义盒子的材质，采用自定义着色器
-      var texturesArray = [];
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/right.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/left.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/top.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/bottom.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/front.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load("picture/FirstHousing/door/back.jpeg")
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/right.jpeg"
-        )
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/left.jpeg"
-        )
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/top.jpeg"
-        )
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/bottom.jpeg"
-        )
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/front.jpeg"
-        )
-      );
-      texturesArray.push(
-        new THREE.TextureLoader().load(
-          "picture/FirstHousing/living-room/back.jpeg"
-        )
-      );
+  </script>
+  <script>
+    var camera,
+      scene,
+      renderer,
+      mesh_living,
+      mesh_circle,
+      mesh_center,
+      geometry_living,
+      geometry_circle,
+      geometry_center;
+    var isUserInteracting = false, //用户是否交互
+      onPointerDownPointerX = 0,
+      onPointerDownPointerY = 0, //鼠标点击的位置
+      lon = 90,
+      onPointerDownLon = 0, //经度
+      lat = 0,
+      onPointerDownLat = 0, //维度
+      phi = 0,
+      theta = 0, //计算相机的位置
+      target = new THREE.Vector3(); //三维向量
+    var materialArray = []; //定义盒子的材质，采用自定义着色器
+    var texturesArray = [];
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/right.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/left.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/top.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/bottom.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/front.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load("picture/FirstHousing/door/back.jpeg")
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/right.jpeg"
+      )
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/left.jpeg"
+      )
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/top.jpeg"
+      )
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/bottom.jpeg"
+      )
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/front.jpeg"
+      )
+    );
+    texturesArray.push(
+      new THREE.TextureLoader().load(
+        "picture/FirstHousing/living-room/back.jpeg"
+      )
+    );
 
-      //初始化函数
-      function init() {
-        var container; //初始化操作
-        container = document.getElementById("container");
-        camera = new THREE.PerspectiveCamera(
-          75,
-          window.innerWidth / window.innerHeight,
-          0.01,
-          10000
-        ); //相机初始位置
-        camera.position.set(0, 0, 0);
+    //初始化函数
+    function init() {
+      var container; //初始化操作
+      container = document.getElementById("container");
+      camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.01,
+        10000
+      ); //相机初始位置
+      camera.position.set(0, 0, 0);
 
-        scene = new THREE.Scene();
+      scene = new THREE.Scene();
 
-        //定义盒子模型的骨架
-        geometry_living = new THREE.BoxBufferGeometry(100, 100, 100); //设置正方体和骨架分段数
-        //定义行走点的骨架
-        geometry_circle = new THREE.CircleGeometry(4, 20, 0, 2 * Math.PI);
+      //定义盒子模型的骨架
+      geometry_living = new THREE.BoxBufferGeometry(100, 100, 100); //设置正方体和骨架分段数
+      //定义行走点的骨架
+      geometry_circle = new THREE.CircleGeometry(4, 20, 0, 2 * Math.PI);
 
-        geometry_center = new THREE.CircleGeometry(12, 40, 0, 2 * Math.PI);
-        //随机挑选一个面翻转扩大，使得贴图能够正常渲染
-        geometry_living.scale(-1, 1, 1);
-        geometry_circle.scale(-1, 1, 1);
-        geometry_center.scale(-1, 1, 1);
+      geometry_center = new THREE.CircleGeometry(12, 40, 0, 2 * Math.PI);
+      //随机挑选一个面翻转扩大，使得贴图能够正常渲染
+      geometry_living.scale(-1, 1, 1);
+      geometry_circle.scale(-1, 1, 1);
+      geometry_center.scale(-1, 1, 1);
 
-        //渲染六个面
-        console.log(document.time);
-        document.time = 0;
-        console.log(document.time);
-        for (let i = 0; i < 6; i++) {
-          materialArray.push(
-            new THREE.ShaderMaterial({
-              uniforms: {
-                // texture1 texture2名字是和上面的fragmentShader语句相对应的；
-                // three.js中是要求值必须是glsl中的类型，没有要求key的值必须是什么，可以随便
-                texture1: {
-                  value: texturesArray[i],
-                },
-                //用于渐变的纹理
-                texture2: {
-                  value: texturesArray[6 + i],
-                },
-                // 这里的time就是fragmentShader中定义的uniform变量time；three.js中就是可以这样那种着色器中的变量，和webgl不同
-                time: {
-                  value: document.time,
-                },
+      //渲染六个面
+      console.log(document.time);
+      document.time = 0;
+      console.log(document.time);
+      for (let i = 0; i < 6; i++) {
+        materialArray.push(
+          new THREE.ShaderMaterial({
+            uniforms: {
+              // texture1 texture2名字是和上面的fragmentShader语句相对应的；
+              // three.js中是要求值必须是glsl中的类型，没有要求key的值必须是什么，可以随便
+              texture1: {
+                value: texturesArray[i],
               },
-              // 顶点着色器  script标签也可以用id获取到
-              vertexShader: document.getElementById("vertexShader").textContent,
-              // 片元着色器
-              fragmentShader:
-                document.getElementById("fragmentShader").textContent,
-              side: THREE.DoubleSide, // 这里FrontSide也是可以的，因为上面的scale(-1,1,1),已经把面反转过来了，现在正面朝里；属性在material中
-            })
+              //用于渐变的纹理
+              texture2: {
+                value: texturesArray[6 + i],
+              },
+              // 这里的time就是fragmentShader中定义的uniform变量time；three.js中就是可以这样那种着色器中的变量，和webgl不同
+              time: {
+                value: document.time,
+              },
+            },
+            // 顶点着色器  script标签也可以用id获取到
+            vertexShader: document.getElementById("vertexShader").textContent,
+            // 片元着色器
+            fragmentShader:
+              document.getElementById("fragmentShader").textContent,
+            side: THREE.DoubleSide, // 这里FrontSide也是可以的，因为上面的scale(-1,1,1),已经把面反转过来了，现在正面朝里；属性在material中
+          })
+        );
+      }
+
+      //定义盒子的网格
+      mesh_living = new THREE.Mesh(geometry_living, materialArray); //为骨架贴上贴图
+
+      mesh_living.position.set(0, 0, 0);
+      console.log(mesh_living);
+      // 生成地面白点物体
+      mesh_circle = new THREE.Mesh(
+        geometry_circle,
+        // 定义白点的材质  MeshBasicMaterial材质不受关照影响
+        new THREE.MeshBasicMaterial({
+          map: new THREE.TextureLoader().load("picture/hotpot.png"), // map属性为颜色贴图
+          transparent: true,
+        })
+      );
+      mesh_circle.rotation.x = Math.PI / 2;
+      mesh_circle.position.set(-10, -25, 40);
+      // 生成门口地面带方位的白色物体
+      mesh_center = new THREE.Mesh(
+        geometry_center,
+        new THREE.MeshBasicMaterial({
+          map: new THREE.TextureLoader().load("picture/center.png"),
+          transparent: true,
+          opacity: 0.4,
+        })
+      );
+      mesh_center.rotation.x = Math.PI / 2;
+      mesh_center.rotation.z = Math.PI;
+      mesh_center.position.set(
+        camera.position.x,
+        camera.position.y - 20,
+        camera.position.z
+      );
+      scene.add(mesh_living);
+
+      scene.add(mesh_circle);
+
+      scene.add(mesh_center);
+
+      // scene.add(new THREE.CameraHelper(camera)) // 添加辅助相机
+      const axes = new THREE.AxesHelper(200);
+      scene.add(axes);
+
+      //定义渲染器
+      renderer = new THREE.WebGLRenderer({
+        antialias: true, // 是否执行抗锯齿。默认为false.
+      });
+      renderer.setClearColor(0xffffff, 1);
+      renderer.setPixelRatio(window.devicePixelRatio); // 设置设备像素比。通常用于避免HiDPI设备上绘图模糊
+      renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染区域尺寸
+      container.appendChild(renderer.domElement); //body元素中插入canvas对象
+
+      document.addEventListener("click", mouseClickEvent, false);
+      document.addEventListener("mousedown", mouseMoveEvent, false);
+      //添加电脑事件
+      document.addEventListener("mousedown", onDocumentMouseDown, false);
+      document.addEventListener("mousemove", onDocumentMouseMove, false);
+      document.addEventListener("mouseup", onDocumentMouseUp, false);
+      document.addEventListener("wheel", onDocumentMouseWheel, false);
+      //添加手机事件
+      document.addEventListener("touchstart", onDocumentTouchStart, {
+        passive: false,
+      });
+      document.addEventListener("touchmove", onDocumentTouchMove, {
+        passive: false,
+      });
+      document.addEventListener("touchend", onDocumentTouchEnd, {
+        passive: false,
+      });
+      document.addEventListener("touchstart", mouseMoveEvent, {
+        passive: false,
+      });
+      document.addEventListener("touchstart", mouseClickEvent, {
+        passive: false,
+      });
+      //刷新按钮，页面重置后的事件
+      window.addEventListener("resize", onWindowResize, false);
+
+      // container.addEventListener('click', mouseClickEvent, false);
+      // container.addEventListener('mousemove', mouseMoveEvent, false);
+      // //添加电脑事件
+      // document.addEventListener('mousedown',onDocumentMouseDown,false);
+      // document.addEventListener('mousemove',onDocumentMouseMove,false);
+      // document.addEventListener('mouseup',onDocumentMouseUp,false);
+      // document.addEventListener('wheel',onDocumentMouseWheel,false);
+      // //添加手机事件
+      // document.addEventListener('touchstart',onDocumentTouchStart,{passive:false});
+      // document.addEventListener('touchmove',onDocumentTouchMove,{passive:false});
+      // document.addEventListener('touchstart',mouseMoveEvent,{passive:false});
+      // document.addEventListener('touchstart',mouseClickEvent,{passive:false});
+      // //刷新按钮，页面重置后的事件
+      // window.addEventListener('resize',onWindowResize,false);
+    }
+
+    var mouse = new THREE.Vector2();
+    function mouseMoveEvent(event) {
+      if (event.touches) {
+        mouse.width =
+          (event.touches[0].pageX / container.clientWidth) * 2 - 1;
+        mouse.height =
+          -(event.touches[0].pageY / container.clientHeight) * 2 + 1;
+      } else {
+        // clientX 事件属性返回当事件被触发时鼠标指针相对于浏览器页面（或客户区）的水平坐标。
+        mouse.width = (event.clientX / container.clientWidth) * 2 - 1;
+        mouse.height = -(event.clientY / container.clientHeight) * 2 + 1;
+      }
+    }
+    function mouseClickEvent(event) {
+      event.preventDefault();
+      // 射线捕捉
+      let raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera); // 使用一个新的原点和方向来更新射线。从相机的位置看向鼠标的位置
+      let intersects = raycaster.intersectObjects([mesh_circle]); // 检测所有在射线与物体之间，包括或不包括后代的相交部分。返回结果时，相交部分将按距离进行排序，最近的位于第一个。这里是判断有没有与地面上的白色圆圈有没有相交
+      let move_begin = {
+        mix: 0,
+        s_x: 1.5,
+        s_y: 1.5,
+        s_z: 3,
+      };
+      let move_end = {
+        mix: 1,
+        s_x: 1,
+        s_y: 1,
+        s_z: 1,
+      };
+      // 判断有没有相交的物体
+      if (intersects.length > 0) {
+        // 相交的物体位于Z轴的哪一侧
+        if (mesh_circle.position.z > 0) {
+          // 地面上用于移动的白点就两个位置，门口和室内两个位置
+          mesh_circle.position.set(-10, -25, -40);
+          move_begin.mix = 0;
+          move_end.mix = 1;
+          ChangeScene(move_begin, move_end);
+        } else if (mesh_circle.position.z < 0) {
+          mesh_circle.position.set(-10, -25, 40);
+          move_begin.mix = 1;
+          move_end.mix = 0;
+          ChangeScene(move_begin, move_end);
+        }
+      }
+      setTimeout(function () {
+        isUserInteracting = false;
+        console.log("我执行了！");
+      }, 1000);
+    }
+
+    //切换函数
+    function ChangeScene(move_begin, move_end) {
+      // 物体mesh上面没有scale方法，用的是Object3D上的scale属性所以后面加上set用于设置
+      mesh_living.scale.set(1.5, 1.5, 3);
+
+      // new TWEEN.Tween()可以接收一个对象作为参数
+      let tween = new TWEEN.Tween(move_begin)
+        // to()表示从move_begin状态到move_end需要1000毫秒
+        .to(move_end, 1000)
+        // easing缓动函数，Out表示最开始加速，最后放缓
+        .easing(TWEEN.Easing.Quadratic.Out)
+        // onUpdate 每次补间更新时执行
+        .onUpdate(function () {
+          console.log("onUpdate补间执行几次"); // 从打印的结果看，应该是每1毫秒执行一次动画渲染
+          isUserInteracting = true; // 用户是否交互
+          // 房间缩放到move_begin状态
+          mesh_living.scale.set(
+            move_begin.s_x,
+            move_begin.s_y,
+            move_begin.s_z
           );
-        }
-
-        //定义盒子的网格
-        mesh_living = new THREE.Mesh(geometry_living, materialArray); //为骨架贴上贴图
-
-        mesh_living.position.set(0, 0, 0);
-        console.log(mesh_living);
-        // 生成地面白点物体
-        mesh_circle = new THREE.Mesh(
-          geometry_circle,
-          // 定义白点的材质  MeshBasicMaterial材质不受关照影响
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("picture/hotpot.png"), // map属性为颜色贴图
-            transparent: true,
-          })
-        );
-        mesh_circle.rotation.x = Math.PI / 2;
-        mesh_circle.position.set(-10, -25, 40);
-        // 生成门口地面带方位的白色物体
-        mesh_center = new THREE.Mesh(
-          geometry_center,
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("picture/center.png"),
-            transparent: true,
-            opacity: 0.4,
-          })
-        );
-        mesh_center.rotation.x = Math.PI / 2;
-        mesh_center.rotation.z = Math.PI;
-        mesh_center.position.set(
-          camera.position.x,
-          camera.position.y - 20,
-          camera.position.z
-        );
-        scene.add(mesh_living);
-
-        scene.add(mesh_circle);
-
-        scene.add(mesh_center);
-
-        // scene.add(new THREE.CameraHelper(camera)) // 添加辅助相机
-        const axes = new THREE.AxesHelper(200);
-        scene.add(axes);
-
-        //定义渲染器
-        renderer = new THREE.WebGLRenderer({
-          antialias: true, // 是否执行抗锯齿。默认为false.
-        });
-        renderer.setClearColor(0xffffff, 1);
-        renderer.setPixelRatio(window.devicePixelRatio); // 设置设备像素比。通常用于避免HiDPI设备上绘图模糊
-        renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染区域尺寸
-        container.appendChild(renderer.domElement); //body元素中插入canvas对象
-
-        document.addEventListener("click", mouseClickEvent, false);
-        document.addEventListener("mousedown", mouseMoveEvent, false);
-        //添加电脑事件
-        document.addEventListener("mousedown", onDocumentMouseDown, false);
-        document.addEventListener("mousemove", onDocumentMouseMove, false);
-        document.addEventListener("mouseup", onDocumentMouseUp, false);
-        document.addEventListener("wheel", onDocumentMouseWheel, false);
-        //添加手机事件
-        document.addEventListener("touchstart", onDocumentTouchStart, {
-          passive: false,
-        });
-        document.addEventListener("touchmove", onDocumentTouchMove, {
-          passive: false,
-        });
-        document.addEventListener("touchend", onDocumentTouchEnd, {
-          passive: false,
-        });
-        document.addEventListener("touchstart", mouseMoveEvent, {
-          passive: false,
-        });
-        document.addEventListener("touchstart", mouseClickEvent, {
-          passive: false,
-        });
-        //刷新按钮，页面重置后的事件
-        window.addEventListener("resize", onWindowResize, false);
-
-        // container.addEventListener('click', mouseClickEvent, false);
-        // container.addEventListener('mousemove', mouseMoveEvent, false);
-        // //添加电脑事件
-        // document.addEventListener('mousedown',onDocumentMouseDown,false);
-        // document.addEventListener('mousemove',onDocumentMouseMove,false);
-        // document.addEventListener('mouseup',onDocumentMouseUp,false);
-        // document.addEventListener('wheel',onDocumentMouseWheel,false);
-        // //添加手机事件
-        // document.addEventListener('touchstart',onDocumentTouchStart,{passive:false});
-        // document.addEventListener('touchmove',onDocumentTouchMove,{passive:false});
-        // document.addEventListener('touchstart',mouseMoveEvent,{passive:false});
-        // document.addEventListener('touchstart',mouseClickEvent,{passive:false});
-        // //刷新按钮，页面重置后的事件
-        // window.addEventListener('resize',onWindowResize,false);
-      }
-
-      var mouse = new THREE.Vector2();
-      function mouseMoveEvent(event) {
-        if (event.touches) {
-          mouse.width =
-            (event.touches[0].pageX / container.clientWidth) * 2 - 1;
-          mouse.height =
-            -(event.touches[0].pageY / container.clientHeight) * 2 + 1;
-        } else {
-          // clientX 事件属性返回当事件被触发时鼠标指针相对于浏览器页面（或客户区）的水平坐标。
-          mouse.width = (event.clientX / container.clientWidth) * 2 - 1;
-          mouse.height = -(event.clientY / container.clientHeight) * 2 + 1;
-        }
-      }
-      function mouseClickEvent(event) {
-        event.preventDefault();
-        // 射线捕捉
-        let raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera); // 使用一个新的原点和方向来更新射线。从相机的位置看向鼠标的位置
-        let intersects = raycaster.intersectObjects([mesh_circle]); // 检测所有在射线与物体之间，包括或不包括后代的相交部分。返回结果时，相交部分将按距离进行排序，最近的位于第一个。这里是判断有没有与地面上的白色圆圈有没有相交
-        let move_begin = {
-          mix: 0,
-          s_x: 1.5,
-          s_y: 1.5,
-          s_z: 3,
-        };
-        let move_end = {
-          mix: 1,
-          s_x: 1,
-          s_y: 1,
-          s_z: 1,
-        };
-        // 判断有没有相交的物体
-        if (intersects.length > 0) {
-          // 相交的物体位于Z轴的哪一侧
-          if (mesh_circle.position.z > 0) {
-            // 地面上用于移动的白点就两个位置，门口和室内两个位置
-            mesh_circle.position.set(-10, -25, -40);
-            move_begin.mix = 0;
-            move_end.mix = 1;
-            ChangeScene(move_begin, move_end);
-          } else if (mesh_circle.position.z < 0) {
-            mesh_circle.position.set(-10, -25, 40);
-            move_begin.mix = 1;
-            move_end.mix = 0;
-            ChangeScene(move_begin, move_end);
-          }
-        }
-        setTimeout(function () {
-          isUserInteracting = false;
-          console.log("我执行了！");
-        }, 1000);
-      }
-
-      //切换函数
-      function ChangeScene(move_begin, move_end) {
-        // 物体mesh上面没有scale方法，用的是Object3D上的scale属性所以后面加上set用于设置
-        mesh_living.scale.set(1.5, 1.5, 3);
-
-        // new TWEEN.Tween()可以接收一个对象作为参数
-        let tween = new TWEEN.Tween(move_begin)
-          // to()表示从move_begin状态到move_end需要1000毫秒
-          .to(move_end, 1000)
-          // easing缓动函数，Out表示最开始加速，最后放缓
-          .easing(TWEEN.Easing.Quadratic.Out)
-          // onUpdate 每次补间更新时执行
-          .onUpdate(function () {
-            console.log("onUpdate补间执行几次"); // 从打印的结果看，应该是每1毫秒执行一次动画渲染
-            isUserInteracting = true; // 用户是否交互
-            // 房间缩放到move_begin状态
-            mesh_living.scale.set(
-              move_begin.s_x,
-              move_begin.s_y,
-              move_begin.s_z
-            );
-            // 时间置到move_begin.mix值
-            document.time = move_begin.mix;
-            if (document.time < 1) {
-              console.log("document.time:" + document.time);
-              // 1000毫秒等于1秒，小于1代表动画还没有执行完成
-              for (let i = 0; i < 6; i++) {
-                // materialArray盒子的材质
-                // uniform中的time变化时，会引起three.js着色器的重新渲染，一般自定义着色器且需要动画时会用到time
-                materialArray[i].uniforms.time.value = document.time;
-              }
-            } else {
-              isUserInteracting = false;
-              // 让带方位的圆盘跟着过来
-              mesh_center.position.set(
-                camera.position.x,
-                camera.position.y - 20,
-                camera.position.z
-              );
-              console.log("动画执行完毕！");
+          // 时间置到move_begin.mix值
+          document.time = move_begin.mix;
+          if (document.time < 1) {
+            console.log("document.time:" + document.time);
+            // 1000毫秒等于1秒，小于1代表动画还没有执行完成
+            for (let i = 0; i < 6; i++) {
+              // materialArray盒子的材质
+              // uniform中的time变化时，会引起three.js着色器的重新渲染，一般自定义着色器且需要动画时会用到time
+              materialArray[i].uniforms.time.value = document.time;
             }
-          })
-          // start表示启动
-          .start();
-      }
-      // 刷新时执行
-      function onWindowResize() {
-        // 摄像机视椎体长宽比
-        camera.aspect = window.innerWidth / window.innerHeight;
-        // 更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      }
+          } else {
+            isUserInteracting = false;
+            // 让带方位的圆盘跟着过来
+            mesh_center.position.set(
+              camera.position.x,
+              camera.position.y - 20,
+              camera.position.z
+            );
+            console.log("动画执行完毕！");
+          }
+        })
+        // start表示启动
+        .start();
+    }
+    // 刷新时执行
+    function onWindowResize() {
+      // 摄像机视椎体长宽比
+      camera.aspect = window.innerWidth / window.innerHeight;
+      // 更新摄像机投影矩阵。在任何参数被改变以后必须被调用。
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-      function onDocumentMouseDown(event) {
-        event.preventDefault();
+    function onDocumentMouseDown(event) {
+      event.preventDefault();
+      isUserInteracting = true;
+      // 鼠标点击位置
+      onPointerDownPointerX = event.clientX;
+      onPointerDownPointerY = event.clientY;
+      // 经度，纬度
+      onPointerDownLon = lon;
+      onPointerDownLat = lat;
+    }
+    function onDocumentMouseMove(event) {
+      if (isUserInteracting === true) {
+        lon =
+          (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon;
+        lat =
+          (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat;
+        console.log(onPointerDownLon);
+        console.log(onPointerDownPointerX - event.clientX);
+        console.log(lon);
+      }
+    }
+    function onDocumentMouseUp(event) {
+      isUserInteracting = false;
+    }
+    function onDocumentMouseWheel(event) {
+      var fov = camera.fov + event.deltaY * 0.05;
+      // 摄像机视锥体垂直视野角度，从视图的底部到顶部，以角度来表示。默认值是50。
+      camera.fov = THREE.Math.clamp(fov, 10, 75);
+
+      camera.updateProjectionMatrix();
+    }
+    function onDocumentTouchStart(event) {
+      if (event.touches.length == 1) {
         isUserInteracting = true;
-        // 鼠标点击位置
-        onPointerDownPointerX = event.clientX;
-        onPointerDownPointerY = event.clientY;
-        // 经度，纬度
+        event.preventDefault();
+
+        onPointerDownPointerX = event.touches[0].pageX;
+        onPointerDownPointerY = event.touches[0].pageY;
+
         onPointerDownLon = lon;
         onPointerDownLat = lat;
       }
-      function onDocumentMouseMove(event) {
-        if (isUserInteracting === true) {
-          lon =
-            (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon;
-          lat =
-            (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat;
-        }
-      }
-      function onDocumentMouseUp(event) {
-        isUserInteracting = false;
-      }
-      function onDocumentMouseWheel(event) {
-        var fov = camera.fov + event.deltaY * 0.05;
-        // 摄像机视锥体垂直视野角度，从视图的底部到顶部，以角度来表示。默认值是50。
-        camera.fov = THREE.Math.clamp(fov, 10, 75);
+    }
+    function onDocumentTouchEnd(event) {
+      isUserInteracting = false;
+    }
+    function onDocumentTouchMove(event) {
+      if (event.touches.length == 1) {
+        event.preventDefault();
 
-        camera.updateProjectionMatrix();
+        lon =
+          (onPointerDownPointerX - event.touches[0].pageX) * 0.1 +
+          onPointerDownLon;
+        lat =
+          (event.touches[0].pageY - onPointerDownPointerY) * 0.1 +
+          onPointerDownLat;
       }
-      function onDocumentTouchStart(event) {
-        if (event.touches.length == 1) {
-          isUserInteracting = true;
-          event.preventDefault();
-
-          onPointerDownPointerX = event.touches[0].pageX;
-          onPointerDownPointerY = event.touches[0].pageY;
-
-          onPointerDownLon = lon;
-          onPointerDownLat = lat;
-        }
+    }
+    function animate() {
+      requestAnimationFrame(animate);
+      update();
+      TWEEN.update();
+    }
+    function update() {
+      if (isUserInteracting === false) {
+        lon += 0.1;
       }
-      function onDocumentTouchEnd(event) {
-        isUserInteracting = false;
-      }
-      function onDocumentTouchMove(event) {
-        if (event.touches.length == 1) {
-          event.preventDefault();
+      /* 旋转的实现：利用角度求的球面坐标；角度就是用的鼠标移动的距离，然后乘0.1可以利用乘的系数控制精度。没必要追求一定是某个数学意义上的角度，距离在变化，那么距离就是一个变量，就能实现动起来，而且弧度本来就是一个实数 */
+      lat = Math.max(-45, Math.min(85, lat));
+      phi = THREE.Math.degToRad(90 - lat);
+      //degToRad 将度转化为弧度。lon:经度
+      theta = THREE.Math.degToRad(lon);
 
-          lon =
-            (onPointerDownPointerX - event.touches[0].pageX) * 0.1 +
-            onPointerDownLon;
-          lat =
-            (event.touches[0].pageY - onPointerDownPointerY) * 0.1 +
-            onPointerDownLat;
-        }
-      }
-      function animate() {
-        requestAnimationFrame(animate);
-        update();
-        TWEEN.update();
-      }
-      function update() {
-        if (isUserInteracting === false) {
-          lon += 0.1;
-        }
+      // 利用的是一个球，经度纬度来确定点，camera.lookAt()只是确定相机朝向，这个点远近没有影响
+      target.x = 500 * Math.sin(phi) * Math.cos(theta);
+      // 因为上面有一个90-lat所以这里用的是cos
+      target.y = 500 * Math.cos(phi);
+      target.z = 500 * Math.sin(phi) * Math.sin(theta);
 
-        lat = Math.max(-45, Math.min(85, lat));
-        phi = THREE.Math.degToRad(90 - lat);
-        //degToRad 将度转化为弧度。lon:经度
-        theta = THREE.Math.degToRad(lon);
+      camera.lookAt(target);
 
-        // 利用的是一个球，经度纬度来确定点，camera.lookAt()只是确定相机朝向，这个点远近没有影响
-        target.x = 500 * Math.sin(phi) * Math.cos(theta);
-        // 因为上面有一个90-lat所以这里用的是cos
-        target.y = 500 * Math.cos(phi);
-        target.z = 500 * Math.sin(phi) * Math.sin(theta);
+      renderer.render(scene, camera);
+    }
+    init();
+    animate();
+  </script>
+</body>
 
-        camera.lookAt(target);
-
-        renderer.render(scene, camera);
-      }
-      init();
-      animate();
-    </script>
-  </body>
 </html>
