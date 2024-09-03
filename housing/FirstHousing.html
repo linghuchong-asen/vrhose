@@ -29,6 +29,7 @@
       包括projectionMatrix viewMatrix modelMatrix三个矩阵也是three.js内部帮忙做的工作,直接拿来用就行 -->
   <!-- three.js还帮助使用者省去了webgl创建顶点缓冲区,纹理图像缓冲区，配置纹理渲染方式,等等一系列繁琐的工作,只需通过ShaderMaterial的uniforms属性传递给three.js参数即可,其他工作three.js内部完成了 -->
   <!-- 使用ShaderMaterial的作用是为了得到一个材质,那么为什么还一定要写顶点着色器呢？写顶点着色器的目的是为了获取到和顶点位置相关的数据，一般的场景片元着色都和位置有着关联，除非是纯色且没有动态变化的场景。 -->
+  <!-- 在一个html中，多个script间的变量在运行时是共享的，texture1 texture2与后面的代码产生联系 -->
   <script id="vertexShader" type="x-shader/x-vertex">
   // attribute vec3 position;
   // attribute vec3 color;
